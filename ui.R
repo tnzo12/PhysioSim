@@ -295,33 +295,81 @@ shinyUI(bslib::page_navbar(
                    tabPanel("Model description",
                             shinyUI(fluidPage(
                               withMathJax(),
-                              h1('Educational PBPK model'),
+                              #
+                              h1('Permeability limited PBPK model'),
                               p(),
                               br(),
-                              p('This physiologically based pharmacokinetic (PBPK) model is designed as an educational tool. The aim is to provide a simple, open source, freely downloadable PBPK model for performing basic single subject bottom-up simulations in R. The model has not been tested against a large set of compounds. All parameters were taken from the literature. The PBPK model was implemented by using the',tags$a(href="https://cran.r-project.org/web/packages/rxode2/index.html", "rxode2"),' package and non-compartmental analysis (NCA) was performed with the ',tags$a(href="https://cran.r-project.org/web/packages/PKNCA/index.html", "PKNCA"),"package."),
+                              #
+                              p('This physiologically based pharmacokinetic (PBPK) model is a model created by modifying the Manchester PBPK model of Melillo et al.
+                                The aim of this Too is that it uses the permeability-limited-model structure and is a simple, OPEN source simulation tool in R.
+                                The PBPK model was implemented by using the',tags$a(href="https://cran.r-project.org/web/packages/rxode2/index.html", "rxode2"),' package and non-compartmental analysis (NCA) was performed with the ',tags$a(href="https://cran.r-project.org/web/packages/PKNCA/index.html", "PKNCA"),"package."),
                               p("The model code can be found at the", tags$a(href="https://github.com/SystemsForecasting/ManchesterPBPK", "SystemsForecasting GitHub page"), "."),
                               p(strong("This is an open source project"),": additions, suggestions and amendments are welcome."),
                               hr(),
-                              h3('Basic equations of the PBPK model'),
-                              p('This model is composed of two parts: a PBPK model describing the distribution, metabolism and elimination of the drug in the body and a compartmental absorption and transit (CAT) based model describing events following per oral drug administration in the gut.'),
+                              #
+                              h3('Fundemetal Concept of the PBPK model'),
+                              p('The model is divided into two structures to represent the absorption and distribution/excretion of the drug:
+                                A PBPK model using permeability-limited model to express the distribution of the drug entering each tissue and a compartmental absorption and transit (CAT) based model describing events following per oral drug administration in the gut.'),
                               br(),
-                              
+                              #
                               h4('PBPK model for drug distribution in the body'),
-                              p('The  PBPK model is an ordinary differential equations (ODE) model. This model is composed of 15 compartments, representing the lungs, brain, heart, kidneys, bones, muscles, stomach, spleen, liver, gut, pancreas, skin, fat, arterial and venous blood. The PBPK model structure is shown in the image below, were red, blue and black-dashed arrows represent arterial and venous blood flow and clearances, respectively.'),
+                              h5("Basic PBPK Model Structure"),
+                              p('The  PBPK model is an ordinary differential equations (ODE) model,and considers each organization as one compartment.
+                                This model is composed of 15 compartments, representing the lungs, brain, heart, kidneys, bones, muscles, stomach, spleen, liver, gut, pancreas, skin, fat, arterial and venous blood.
+                                Additionally, the concentration of each tissue is predicted on the premise that these tissues are connected in parallel.
+                                The PBPK model structure is shown in the image below, were red, blue and black-dashed arrows represent arterial and venous blood flow and clearances, respectively.'),
                               div(img(src = "PBPK_model.png", height = 400), style="text-align: center;"),
-                              p('The drug distributes in all the organs. Clearance is supposed to happen only in the liver and/or kidneys. The equation describing drug distribution in all the tissues except the liver, lungs, arterial and venous blood is the following.'),
+                              h5("Partition Coefficient Calculation"),
+                              p("The Partition Coefficient method was used to describe the process of drug distribution into the capillaries of each tissue.
+                                The partition coefficient is calculated through the drug's LogP, Pka, Fraction unbound, etc., and various calculation methods available on Github were used.
+                                The calculation method of Partition coefficients include Poulin and Theli,Poulin and Theil, Berezhkovskiy, Rodgers and Rowland, Shimitt, PK-sim method."),
+                              h5("Permeability-limted model"),
+                              p("In order to describe the process by which drugs introduced into each tissue enter the cells, we established 3-Sub compartments for each tissue.
+                                The three tissues are composed of capillaries, intestinal, and intracelluar. Drugs are distributed through product of the permeability coefficient of each sub-compartment and the surface area.
+                                Permeabilty coefficient was calculated using the method used in PKSIM.
+                                The Permeability model structure is shown in the image below."),
+                              div(img(src = "Permeability_model.png", height = 400), style="text-align: center;"),
+                              
+                              
+                              ##
+                              h5("Drug Distributin Equation"),
+                              p(HTML('<b>Equation for Perfusion limited model as mentioned in Manchester PBPK</b>')),
                               p(withMathJax('$$\\frac{dc_i}{dt} = \\frac{Q_i}{V_i} \\bigl(c_{art} - c_{i,b,out}  \\bigr)$$')),
                               p('\\(c_{art}\\), \\(c_{i}\\) and \\(c_{i,b,out}\\) are the drug arterial blood concentration, the drug concentration in the i-th organ and the drug concentration in the i-th organ outgoing blood, respectively; \\(Q_i\\) and \\(V_i\\) are the i-th organ blood flow and volume. For solving the previous differential equation, \\(c_{i,b,out}\\) can be expressed as a function of \\(c_{i}\\). In order to do such, an instantaneous equilibration between the blood and tissue concentration in the organs is generally assumed.'),
                               p(withMathJax('$$ \\frac{c_{i}}{c_{i,b,out}} = K_{i,b} $$')),
                               p('\\(K_{i,b}\\) is the tissue to blood partition coefficient. Instead of \\(K_{i,b}\\), the tissue to plasma concentration ratio, \\(K_{i,p}\\), is more commonly used in calculations. \\(K_{i,b}\\) can be expressed as a function of \\(K_{i,p}\\): \\(K_{i,b}=K_{i,p}/BP\\), where \\(BP\\) is the equilibrium blood to plasma concentration ratio. In PBPK models, blood and plasma concentrations are commonly assumed to be in instantaneous equilibrium. \\(c_{i,b,out}\\) can now be expressed as a function of \\(c_{i}\\) and the equation of the organ distribution in the PBPK model can be expressed as follows.'),
                               p(withMathJax('$$\\frac{dc_i}{dt} = \\frac{Q_i}{V_i} \\biggl(c_{art} - \\frac{c_i}{K_{i,p}/BP}  \\biggr)$$')),
-                              p('Equations for lungs (l), liver (liv), kidneys (kid), arterial blood (art) and venous blood (ven) are the following.'),
-                              p(withMathJax('$$\\frac{dc_l}{dt} = \\frac{Q_{all}}{V_l} \\biggl(c_{ven} - \\frac{c_l}{K_{l,p}/BP}  \\biggr)$$')),
-                              p(withMathJax('$$\\frac{dc_{liv}}{dt} = \\frac{Q_{liv,art}}{V_{liv}} \\biggl(c_{art} - \\frac{c_{liv}}{K_{liv,p}/BP}  \\biggr) + \\frac{1}{V_{liv}}\\sum_{j\\in S} \\biggl( Q_j \\frac{c_j}{K_{j,p}/BP} \\biggr) - \\frac{CL_{h,int} \\cdot fu_p}{K_{liv,p}} \\cdot \\frac{c_{liv}}{V_{liv}} + input_{GI}$$')),
-                              p(withMathJax('$$\\frac{dc_{kid}}{dt} = \\frac{Q_{kid}}{V_{kid}} \\biggl(c_{art} - \\frac{c_{kid}}{K_{kid,p}/BP}  \\biggr) - \\frac{CL_{r,int} \\cdot fu_p}{K_{kid,p}} \\cdot \\frac{c_{kid}}{V_{kid}} - GFR \\cdot fu_p \\cdot \\frac{c_{art}}{V_{kid} \\cdot BP} $$')),
+                              
+                              p(HTML('<b>Equation for Sub compartment by applying Permeabiltiy</b>')),
+                              p("The drug that reaches the tissue in this way passes through the product of permeability and surface area.Enter Capilary, Interstitial space, Celluar space."),
+                              p(withMathJax('$$\\text{Cellular space: } \\frac{dc_{cellular}}{dt} = P_{cellular} \\cdot SA_{cellular} \\cdot F_{up} \\cdot \\biggl(c_{interstitial} - \\frac{c_{cellular}}{K_{cellular,p}/BP} \\biggr)$$')),
+                              p(withMathJax('$$\\text{Intestitial space: } :\\frac{dc_{intestital}}{dt} = P_{intestitial} \\cdot SA_{intestitial} \\cdot F_{up} \\cdot \\biggl(c_{vas} - \\frac{c_{intestitial}}{K_{intestitial,p}/BP} \\biggr)$$')),
+                              
+                              p("Therefore, We obtain Equation for 3-sub compartments's equation."),
+                              p(withMathJax("$$\\text{Vascular space Equation:} \\quad\\frac{Q_i}{V_i} \\biggl(c_{art} - \\frac{c_i}{K_{i,p}/BP}  \\biggr) -  \\text{Interstitial equation}$$")),
+                              p(withMathJax('$$\\text{Intestitial space Equation :}\\quad\\text{Intestitial equation-Celluar equation} $$')),
+                              p(withMathJax('$$\\text{Celluar space Equation :}\\quad\\text{Celluar equation} $$')),
+                              
+                              p(HTML('<b>Equation for Other tissue</b>')),
+                              p('In the case of the Equation for lung vascular compartment, there is a difference between inflow and outflow because the lung has different physiological characteristics from other organs.'),
+                              p('Equation for lung Vascular compartment is the following'),
+                              p(withMathJax('$$\\text{Vascular space Equation:} \\quad\\frac{Q_{all}}{V_l} \\biggl(c_{ven} - \\frac{c_l}{K_{l,p}/BP}  \\biggr) - \\text{Interstitial equation}$$')),
+                              
+                              p('Equation for arterial blood(art) and venous blood(ven) are following.'),
                               p(withMathJax('$$\\frac{dc_{art}}{dt} = \\frac{Q_{all}}{V_{art}} \\biggl( \\frac{c_l}{K_{l,p}/BP} - c_{art}  \\biggr)$$')),
                               p(withMathJax('$$\\frac{dc_{ven}}{dt} = \\frac{1}{V_{ven}}\\sum_{j\\in D} \\biggl( Q_j \\frac{c_j}{K_{j,p}/BP} \\biggr) - \\frac{Q_{all}}{V_{ven}} c_{ven} $$')),
-                              p('\\(S\\) is the set of the splanchnic organs (stomach, spleen, gut, pancreas); \\(D\\) is the set of the organs whose venous output enters directly the venous blood compartment (brain, heart, kidneys, bones, muscles, liver, skin, fat); \\(fu_p\\) is the drug fraction unbound in blood; \\(Q_{all}\\) is the cardiac output; \\(Q_{liv,art}\\) is the liver arterial blood flow; \\(CL_{h,int}\\) and \\(CL_{r,int}\\) are the hepatic and renal intrinsic clearances; \\(GFR\\) is the glomerular filtration rate; \\(input_{GI}\\) is the input from the CAT based model.'),
+                              
+                              
+                              
+                              p('Equation for cellucar space of liver(liv) and kidenys(kid) are needed to add Clearance parameter because these tissue have physical characteristic of excretion. '),
+                              p('Equation for clearance for tissue is following '),
+                              p(withMathJax("$$\\text{Clearance = } \\frac{CL_{h,int} \\cdot fu_p}{K_{tissue,p}} \\cdot \\frac{c_{tissue}}{V_{tissue}}$$")),
+                              p('The equation for the cellular space in the liver(liv) and kidney(kid) considering these physical characteristics is as follows. '),
+                              p(withMathJax('$$\\text{Celluar space Equation for liver= } \\text{Celluar space equation} -\\frac{CL_{h,int} \\cdot fu_p}{K_{liv,p}} \\cdot \\frac{c_{liv}}{V_{liv}} +input_{GI} $$' )),
+                              p(withMathJax('$$\\text{Celluar space Equation for Kidney= } \\text{Celluar space equation} -\\frac{CL_{h,int} \\cdot fu_p}{K_{kid,p}} \\cdot \\frac{c_{kid}}{V_{kid}} $$' )),
+                              
+                            
+                              p('\\(fu_p\\) is the drug fraction unbound in blood; \\(Q_{all}\\) is the cardiac output; \\(Q_{liv,art}\\) is the liver arterial blood flow; \\(CL_{h,int}\\) and \\(CL_{r,int}\\) are the hepatic and renal intrinsic clearances; \\(GFR\\) is the glomerular filtration rate; \\(input_{GI}\\) is the input from the CAT based model.'),
                               br(),
                               
                               h4('Compartmental absorption and transit based model'),
@@ -421,7 +469,33 @@ shinyUI(bslib::page_navbar(
                             
                             
                             
-                   )
+                   ),
+
+                  tabPanel("Authors",
+                           shinyUI(fluidPage(
+                             h2('Authors'),
+                             tags$div(
+                               tags$ul(
+                                 tags$li("Woojin Jung (",tags$a(href="https://www.linkedin.com/in/nicola-melillo-4868ba107/", "LinkedIn"),"|",tags$a(href="mailto:nicola.melillo01@gmail.com", "email"),"): conceptualization, development of PBPK software and Shiny R app.")
+                                
+                               )
+                             ),
+                             
+                             h3("Acknowledgments"),
+                             
+                             hr(),
+                             br(),
+                             br(),
+                           )),
+                  )
+  
+
+  
+
+
+
+
+  )
 )
-)
+
 
